@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Analysis context.
@@ -60,7 +62,7 @@ public final class Context {
     // Read content from a file stream
     try (FileInputStream stream = new FileInputStream(file_)) {
       String fileContent = IOHelper.readFullContent(
-        IOHelper.getReaderForInput(stream));
+        new InputStreamReader(stream, StandardCharsets.UTF_8));
       
       // Get line informations
       try (Reader reader = new StringReader(fileContent)) {
