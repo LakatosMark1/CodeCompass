@@ -105,36 +105,44 @@ bool CsharpParser::parseProjectBuildPath(
   std::stringstream log_str(log.get());
   int countFull = 0, countPart = 0;
 
-  while(std::getline(log_str, line, '\n'))
+while(std::getline(log_str, line, '\n'))
   {
-    // Skip empty lines or non-JSON lines (like debug info "ParallelRun ...")
-    if (line.empty() || line[0] != '{') continue;
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end()); // remove \r
+    if (line.empty()) continue;
 
-    try 
+    std::string prefix = "JSON_READY:"; // check if json on console
+    if (line.find(prefix) == 0)
     {
-      std::stringstream jsonStream(line);
-      boost::property_tree::ptree pt;
-      boost::property_tree::read_json(jsonStream, pt);
+      std::string jsonString = line.substr(prefix.length()); // cut the prefix
 
-      bool fullyParsed = pt.get<bool>("fullyParsed");
-      std::string filepath = pt.get<std::string>("filePath");
-      std::string targetDll = pt.get<std::string>("targetDll");
+      try 
+      {
+        std::stringstream jsonStream(jsonString);
+        boost::property_tree::ptree pt;
+        boost::property_tree::read_json(jsonStream, pt);
 
-      // Check if it's an error based on 'fullyParsed'
-      bool isError = !fullyParsed;
+        bool fullyParsed = pt.get<bool>("fullyParsed");
+        std::string filepath = pt.get<std::string>("filePath");
+        std::string targetDll = pt.get<std::string>("targetDll");
 
-      addSource(filepath, targetDll, isError);
+        bool isError = !fullyParsed;
+        addSource(filepath, targetDll, isError);
 
-      if (fullyParsed) { countFull++; }
-      else { countPart++; }
-    } 
-    catch (const boost::property_tree::json_parser::json_parser_error& e) 
-    {
-      LOG(warning) << "Failed to parse JSON output from C# parser: " << e.what() << " | Line: " << line;
+        if (fullyParsed) { countFull++; }
+        else { countPart++; }
+      } 
+      catch (const boost::property_tree::json_parser::json_parser_error& e) 
+      {
+        LOG(warning) << "Failed to parse JSON output from C# parser: " << e.what() << " | Line: " << jsonString;
+      }
+      catch (const boost::property_tree::ptree_error& e)
+      {
+         LOG(warning) << "Missing expected JSON field from C# parser: " << e.what() << " | Line: " << jsonString;
+      }
     }
-    catch (const boost::property_tree::ptree_error& e)
+    else
     {
-       LOG(warning) << "Missing expected JSON field from C# parser: " << e.what() << " | Line: " << line;
+      LOG(debug) << "[C#]: " << line;
     }
   }
 

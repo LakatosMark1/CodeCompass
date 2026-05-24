@@ -166,10 +166,13 @@ namespace CSharpParser
                 WriteLine("ParallelRun " + tree.FilePath);
                 SemanticModel model = compilation.GetSemanticModel(tree);
                 var visitor = new AstVisitor(context, model, tree);
-                visitor.Visit(tree.GetCompilationUnitRoot());      
+                visitor.Visit(tree.GetCompilationUnitRoot());     
+
+                context.SaveChanges();
+                context.ChangeTracker.Clear(); 
 
                 // Find the DLL name and append a | to the filename.
-                string target = fileToTargetDll.ContainsKey(tree.FilePath) ? fileToTargetDll[tree.FilePath] : "Unknown.dll";
+                string target = fileToTargetDll.ContainsKey(tree.FilePath) ? fileToTargetDll[tree.FilePath] : "";
                 
                 var resultData = new 
                 {
@@ -178,7 +181,7 @@ namespace CSharpParser
                     targetDll = target
                 };
 
-                WriteLine(JsonSerializer.Serialize(resultData));
+                Console.WriteLine("JSON_READY:" + JsonSerializer.Serialize(resultData));
 
                 return index;
             });
