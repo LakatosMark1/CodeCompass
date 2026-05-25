@@ -44,7 +44,7 @@ public class IOHelper {
 
     if (charset == null) {
       in.reset();
-      charset = Charset.defaultCharset().name();
+      charset = "UTF-8";
     }
 
     return new InputStreamReader(in, charset);
